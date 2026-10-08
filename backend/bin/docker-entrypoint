@@ -1,8 +1,14 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+# If running the rails server, wait for the DB and prepare it first.
+if [[ "$*" == *"rails server"* ]]; then
+  if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for database..."
+    until bin/rails runner 'ActiveRecord::Base.connection' > /dev/null 2>&1; do
+      sleep 1
+    done
+  fi
+  bin/rails db:prepare
 fi
 
 exec "${@}"
