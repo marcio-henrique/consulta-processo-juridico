@@ -1,12 +1,18 @@
 module Types
   class QueryType < Types::BaseObject
-    # Placeholder field so the schema is valid before spec 03 adds the real
-    # `lawsuit` and `me` fields.
-    field :version, String, null: false,
-      description: "API version string, used to prove the GraphQL endpoint is wired up."
+    field :me, Types::UserType, null: true, description: "Current user or null."
 
-    def version
-      "0.1.0"
+    field :lawsuit, Types::LawsuitPayloadType, null: false,
+      description: "Find a lawsuit by CNJ number (formatted or digits-only)." do
+      argument :number, String, required: true
+    end
+
+    def me
+      Resolvers::MeResolver.call(context: context)
+    end
+
+    def lawsuit(number:)
+      Resolvers::LawsuitResolver.call(number: number, context: context)
     end
   end
 end

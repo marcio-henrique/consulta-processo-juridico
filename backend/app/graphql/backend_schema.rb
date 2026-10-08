@@ -1,5 +1,6 @@
 class BackendSchema < GraphQL::Schema
   query Types::QueryType
+  mutation Types::MutationType
 
   # Query depth/complexity limits (security.md, architecture.md section 4).
   # Values are placeholders tightened in spec 03/SEC-3 once real fields exist.

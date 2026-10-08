@@ -38,6 +38,7 @@ services:
     volumes:
       - ./backend:/rails
       - ./data:/data:ro
+      - ./docs/contracts:/docs/contracts:ro
       - backend_bundle:/usr/local/bundle
     depends_on:
       db:

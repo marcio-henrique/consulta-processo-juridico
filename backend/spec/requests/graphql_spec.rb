@@ -3,12 +3,12 @@ require "rails_helper"
 RSpec.describe "POST /graphql", type: :request do
   it "returns 200 and executes the query for a JSON POST" do
     post "/graphql",
-      params: { query: "{ version }" }.to_json,
+      params: { query: "{ __typename }" }.to_json,
       headers: { "CONTENT_TYPE" => "application/json" }
 
     expect(response).to have_http_status(:ok)
     body = JSON.parse(response.body)
-    expect(body.dig("data", "version")).to be_a(String)
+    expect(body.dig("data", "__typename")).to eq("Query")
   end
 
   it "returns 405 for a GET request" do

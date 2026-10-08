@@ -6,5 +6,10 @@ namespace :graphql do
       File.write(path, BackendSchema.to_definition)
       puts "Wrote #{path}"
     end
+
+    desc "Compare BackendSchema against docs/contracts/schema.graphql (see bin/contract_check)"
+    task check: :environment do
+      system(Rails.root.join("bin/contract_check").to_s, exception: true)
+    end
   end
 end

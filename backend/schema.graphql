@@ -1,6 +1,176 @@
+type AuthPayload {
+  errors: [UserError!]!
+  user: User
+}
+
+enum ErrorCode {
+  INVALID_ARGUMENT
+  INVALID_CNJ
+  NOT_FOUND
+  RATE_LIMITED
+  SUMMARY_UNAVAILABLE
+  UNAUTHENTICATED
+  VALIDATION_FAILED
+}
+
+type GenerateSummaryPayload {
+  errors: [UserError!]!
+  summary: Summary
+}
+
+"""
+An ISO 8601-encoded date
+"""
+scalar ISO8601Date @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+"""
+An ISO 8601-encoded datetime
+"""
+scalar ISO8601DateTime @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+type Lawsuit {
+  court: String!
+  forum: String!
+
+  """
+  Cached summary for the current movements and prompt version. Never calls the LLM.
+  """
+  latestSummary: Summary
+
+  """
+  Newest first: occurred_on DESC, then source_row ASC. first defaults to 25, max 100.
+  """
+  movements(after: String, first: Int = 25): MovementConnection!
+  movementsCount: Int!
+
+  """
+  Canonical CNJ number, for example 1001399-31.2023.8.26.0070.
+  """
+  number: String!
+  numberOfAuthors: Int!
+  value: Money!
+}
+
+type LawsuitPayload {
+  errors: [UserError!]!
+  lawsuit: Lawsuit
+}
+
+type Money {
+  """
+  Decimal string with two places, for example 10000.00.
+  """
+  amount: String!
+
+  """
+  pt-BR currency, for example R$ 10.000,00.
+  """
+  formatted: String!
+}
+
+type Movement {
+  """
+  Plain text, may contain line breaks. Null when the court gave no content.
+  """
+  content: String
+  date: ISO8601Date!
+  id: ID!
+  title: String!
+}
+
+type MovementConnection {
+  nodes: [Movement!]!
+  pageInfo: PageInfo!
+}
+
+type Mutation {
+  """
+  Returns the cached summary or generates one synchronously (see ADR-0003).
+  """
+  generateSummary(lawsuitNumber: String!): GenerateSummaryPayload!
+
+  """
+  Upsert the current user's vote for a summary.
+  """
+  rateSummary(helpful: Boolean!, summaryId: ID!): RateSummaryPayload!
+  signIn(input: SignInInput!): AuthPayload!
+  signOut: SignOutPayload!
+  signUp(input: SignUpInput!): AuthPayload!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
 type Query {
   """
-  API version string, used to prove the GraphQL endpoint is wired up.
+  Find a lawsuit by CNJ number (formatted or digits-only).
   """
-  version: String!
+  lawsuit(number: String!): LawsuitPayload!
+
+  """
+  Current user or null.
+  """
+  me: User
+}
+
+type RateSummaryPayload {
+  errors: [UserError!]!
+  feedback: SummaryFeedback
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+type SignOutPayload {
+  errors: [UserError!]!
+  success: Boolean!
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+}
+
+type Summary {
+  """
+  Plain text, at most 3 paragraphs separated by blank lines. Never HTML.
+  """
+  body: String!
+  generatedAt: ISO8601DateTime!
+  id: ID!
+
+  """
+  Current user's vote: true, false or null (not voted). Never exposes other users.
+  """
+  myFeedback: Boolean
+}
+
+type SummaryFeedback {
+  helpful: Boolean!
+  summaryId: ID!
+}
+
+type User {
+  email: String!
+  id: ID!
+}
+
+type UserError {
+  code: ErrorCode!
+
+  """
+  Input field name when the error is about one field (for example email, password, number).
+  """
+  field: String
+
+  """
+  pt-BR, safe to show to users.
+  """
+  message: String!
 }
