@@ -1,0 +1,152 @@
+"""
+CONTRACT: GraphQL schema shared by the backend and frontend lanes.
+Source of truth until backend/schema.graphql is generated and reviewed (gate G2).
+Change rules: see docs/contracts/README.md. Frontend lanes code against this file
+(codegen + MSW) from minute 0; backend lanes implement it.
+Authentication: every operation except signUp, signIn and me requires a session;
+anonymous calls return errors: [{ code: UNAUTHENTICATED }] (HTTP 200).
+"""
+
+scalar ISO8601Date
+scalar ISO8601DateTime
+
+type Query {
+  "Current user or null."
+  me: User
+
+  "Find a lawsuit by CNJ number (formatted or digits-only)."
+  lawsuit(number: String!): LawsuitPayload!
+}
+
+type Mutation {
+  signUp(input: SignUpInput!): AuthPayload!
+  signIn(input: SignInInput!): AuthPayload!
+  signOut: SignOutPayload!
+
+  "Returns the cached summary or generates one synchronously (see ADR-0003)."
+  generateSummary(lawsuitNumber: String!): GenerateSummaryPayload!
+
+  "Upsert the current user's vote for a summary."
+  rateSummary(summaryId: ID!, helpful: Boolean!): RateSummaryPayload!
+}
+
+# ---------- Shared ----------
+
+enum ErrorCode {
+  INVALID_CNJ
+  NOT_FOUND
+  INVALID_ARGUMENT
+  UNAUTHENTICATED
+  SUMMARY_UNAVAILABLE
+  RATE_LIMITED
+  VALIDATION_FAILED
+}
+
+type UserError {
+  code: ErrorCode!
+  "pt-BR, safe to show to users."
+  message: String!
+  "Input field name when the error is about one field (for example email, password, number)."
+  field: String
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# ---------- Lawsuit ----------
+
+type LawsuitPayload {
+  lawsuit: Lawsuit
+  errors: [UserError!]!
+}
+
+type Lawsuit {
+  "Canonical CNJ number, for example 1001399-31.2023.8.26.0070."
+  number: String!
+  forum: String!
+  court: String!
+  value: Money!
+  numberOfAuthors: Int!
+  movementsCount: Int!
+  "Newest first: occurred_on DESC, then source_row ASC. first defaults to 25, max 100."
+  movements(first: Int = 25, after: String): MovementConnection!
+  "Cached summary for the current movements and prompt version. Never calls the LLM."
+  latestSummary: Summary
+}
+
+type Money {
+  "Decimal string with two places, for example 10000.00."
+  amount: String!
+  "pt-BR currency, for example R$ 10.000,00."
+  formatted: String!
+}
+
+type MovementConnection {
+  nodes: [Movement!]!
+  pageInfo: PageInfo!
+}
+
+type Movement {
+  id: ID!
+  date: ISO8601Date!
+  title: String!
+  "Plain text, may contain line breaks. Null when the court gave no content."
+  content: String
+}
+
+# ---------- Summary ----------
+
+type Summary {
+  id: ID!
+  "Plain text, at most 3 paragraphs separated by blank lines. Never HTML."
+  body: String!
+  generatedAt: ISO8601DateTime!
+  "Current user's vote: true, false or null (not voted). Never exposes other users."
+  myFeedback: Boolean
+}
+
+type GenerateSummaryPayload {
+  summary: Summary
+  errors: [UserError!]!
+}
+
+type RateSummaryPayload {
+  feedback: SummaryFeedback
+  errors: [UserError!]!
+}
+
+type SummaryFeedback {
+  summaryId: ID!
+  helpful: Boolean!
+}
+
+# ---------- Authentication ----------
+
+type User {
+  id: ID!
+  email: String!
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+type AuthPayload {
+  user: User
+  errors: [UserError!]!
+}
+
+type SignOutPayload {
+  success: Boolean!
+  errors: [UserError!]!
+}
