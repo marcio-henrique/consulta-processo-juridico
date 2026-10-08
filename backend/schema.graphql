@@ -1,0 +1,6 @@
+type Query {
+  """
+  API version string, used to prove the GraphQL endpoint is wired up.
+  """
+  version: String!
+}

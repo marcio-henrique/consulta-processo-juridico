@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  post "graphql", to: "graphql#execute"
+  match "graphql", via: [ :get, :put, :patch, :delete ], to: "graphql#method_not_allowed"
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
