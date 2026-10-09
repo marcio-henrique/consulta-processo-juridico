@@ -3,6 +3,8 @@
 data/*
 !data/lawsuits_movements.csv
 
+docs/presentation/
+
 # Secrets and local environment (never commit)
 .env
 .env.*
