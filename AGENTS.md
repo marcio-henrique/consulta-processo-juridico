@@ -38,7 +38,7 @@ Hard constraints from the challenge: automated tests covering **>= 80%**, a rela
 | `.kiro/specs/` | Kiro specs (`requirements.md`, `design.md`, `tasks.md`), one folder per feature |
 | `.kiro/steering/` | Kiro steering (thin wrappers pointing to `docs/`) |
 
-> `backend/` and `frontend/` do not exist yet. They are created by spec `01-project-foundation`.
+> `backend/` and `frontend/` exist as of spec `01-project-foundation` (Rails API scaffold with GraphQL contract stubs and migrations; Vite React TS scaffold with Apollo Client). Real feature behavior lands in specs `02`-`07`.
 
 ## Documentation map
 
@@ -133,12 +133,15 @@ Tool-agnostic playbooks in [`docs/skills/`](docs/skills/README.md). Read the mat
 
 ## Common commands
 
-> Final commands are defined in spec 01. Until then this section is the contract; keep it in sync with the README.
+> Verified against the actual repo as of spec 01 (project-foundation). See the [README](README.md#getting-started) for the full list, including lint/security/codegen commands.
 
 ```bash
-docker compose up --build              # api + db + web
-docker compose run --rm api bin/rails db:setup import:lawsuits
-docker compose run --rm api bundle exec rspec          # backend tests + coverage gate
-docker compose run --rm web npm test -- --run          # frontend tests
-docker compose run --rm api bundle exec rubocop        # lint
+cp .env.example .env                                        # set HOST_UID/HOST_GID, SECRET_KEY_BASE, GEMINI_API_KEY
+docker compose up --build                                   # db + api (3000) + web (5173)
+docker compose run --rm api bin/rails import:lawsuits        # CSV import; added by spec 02, not yet implemented
+docker compose run --rm -e RAILS_ENV=test api bundle exec rspec   # backend tests + coverage gate (RAILS_ENV=test is required)
+docker compose run --rm web npm test -- --run                # frontend tests
+docker compose run --rm api bundle exec rubocop               # backend lint
+docker compose run --rm web npm run lint                      # frontend lint
+docker compose run --rm api bin/contract_check                 # GraphQL schema vs. docs/contracts/schema.graphql
 ```

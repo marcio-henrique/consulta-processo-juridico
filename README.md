@@ -4,24 +4,95 @@ Lawsuit lookup for Brazilian CNJ numbers. The user enters a CNJ number and sees 
 
 Built for the Resolvvi technical challenge (see [`data/Desafio Técnico com IA - 2026.md`](data/Desafio%20Técnico%20com%20IA%20-%202026.md)).
 
-> **Status:** planning complete, implementation not started. The run instructions below are completed by spec `01-project-foundation` (task F-9). Do not rely on them until then.
+> **Status:** project foundation in place (spec `01-project-foundation`). Rails API, GraphQL schema stubs, Postgres migrations, Docker Compose, React frontend, CI and this README are done. Real feature behavior (CSV import, lawsuit lookup, AI summary, auth, feedback) is implemented by specs `02` through `07`.
 
-## Planned stack
+## Stack
 
-| Layer | Technology |
-|-------|------------|
-| Backend | Ruby on Rails (API mode) + GraphQL (`graphql-ruby`) |
-| Database | PostgreSQL |
-| Frontend | React + TypeScript + Vite + Apollo Client |
-| LLM | Provider-agnostic adapter, configured by ENV |
-| Tests | RSpec + SimpleCov (>= 80%), Vitest, Playwright smoke |
-| Runtime | Docker Compose |
+| Layer | Technology | Verified version |
+|-------|------------|-------------------|
+| Backend | Ruby on Rails (API mode) + GraphQL (`graphql-ruby`) | Rails 8.1.4, Ruby 3.3.12 |
+| Database | PostgreSQL | 16 |
+| Frontend | React + TypeScript + Vite + Apollo Client | React 19, Vite 8, TypeScript ~6.0, Node 22 |
+| LLM | Provider-agnostic adapter (`Llm::Client`), configured by ENV; `fake` provider in tests | Gemini (`gemini-3.5-flash-lite`) |
+| Tests | RSpec + SimpleCov (backend, >= 80% line coverage), Vitest + Testing Library (frontend), Playwright + axe-core smoke | — |
+| Runtime | Docker Compose (`db`, `api`, `web`) | Compose v2 |
 
 Why these choices: [ADR-0001](docs/adr/0001-technology-stack.md).
 
 ## Getting started
 
-_To be completed in task F-9 (README run instructions): prerequisites, `.env` setup, `docker compose up`, CSV import, running tests, LLM provider configuration._
+### Prerequisites
+
+- Docker and Docker Compose v2 (`docker compose version`). The host's own Ruby/Node are **not** used; everything runs in containers.
+- A Linux/macOS host user whose UID/GID you know (`id -u`, `id -g`) if they are not `1000` — see the `.env` note below.
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set:
+
+- `HOST_UID` / `HOST_GID`: run `id -u` and `id -g` on your machine. If both are `1000` (the common case on a fresh Linux/macOS install) you can leave the defaults. If they differ, the `api`/`web` containers will fail with permission errors on bind-mounted files until you set these correctly.
+- `SECRET_KEY_BASE`: any long random string for local dev, e.g. `openssl rand -hex 64`.
+- `GEMINI_API_KEY`: optional. Leave empty to use the deterministic `fake` LLM provider (`LLM_PROVIDER=auto` falls back to it automatically). Get a key at [Google AI Studio](https://aistudio.google.com/) if you want real Gemini summaries.
+
+### 2. Start the stack
+
+```bash
+docker compose up --build
+```
+
+This builds and starts `db` (Postgres), `api` (Rails, port `3000`) and `web` (Vite dev server, port `5173`). The API entrypoint waits for the database and runs `db:prepare` automatically.
+
+- Health check: `curl http://localhost:3000/up` should return `200`.
+- Frontend: open `http://localhost:5173/`.
+- GraphQL: `POST http://localhost:5173/graphql` (proxied to the API) or `POST http://localhost:3000/graphql` directly.
+
+### 3. Import the challenge data
+
+The CSV importer is implemented by spec `02-lawsuit-data-import` (not yet done as of this foundation). Once it lands:
+
+```bash
+docker compose run --rm api bin/rails import:lawsuits
+```
+
+### 4. Run the tests
+
+```bash
+# Backend: RSpec + SimpleCov (fails the build below 80% line coverage)
+# RAILS_ENV=test is required explicitly: the api service sets RAILS_ENV=development
+# by default, which overrides rails_helper's own ENV['RAILS_ENV'] ||= 'test' fallback.
+docker compose run --rm -e RAILS_ENV=test api bundle exec rspec
+
+# Backend: lint and security
+docker compose run --rm api bundle exec rubocop
+docker compose run --rm api bundle exec brakeman -q --no-pager
+docker compose run --rm api bundle exec bundler-audit check  # downloads the advisory db on first run
+
+# Backend: GraphQL contract drift check (compares against docs/contracts/schema.graphql)
+docker compose run --rm api bin/contract_check
+
+# Frontend: lint, typecheck, unit tests, build
+docker compose run --rm web npm run lint
+docker compose run --rm web npm run typecheck
+docker compose run --rm web npm test -- --run --coverage
+docker compose run --rm web npm run build
+
+# Frontend: regenerate GraphQL types from backend/schema.graphql after a schema change
+docker compose run --rm web npm run codegen
+```
+
+All of the above are run the same way in CI (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
+### Stopping
+
+```bash
+docker compose down
+```
+
+Add `-v` to also drop the Postgres data volume (`docker compose down -v`).
 
 ## Project guide
 
