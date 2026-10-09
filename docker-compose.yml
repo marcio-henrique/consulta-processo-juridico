@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lawsuits}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-lawsuits_development}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lawsuits}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published to the host: only the api/web services talk to it.
+
+  api:
+    build:
+      context: ./backend
+      args:
+        HOST_UID: "${HOST_UID:-1000}"
+        HOST_GID: "${HOST_GID:-1000}"
+    # Run as the host user so files created in the bind-mounted ./backend
+    # (logs, tmp, generated code) stay owned by the developer, not root or a
+    # UID baked into the image. Defaults to 1000 if unset (matches most
+    # single-user Linux/macOS setups); override with
+    # `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up`.
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgres://lawsuits:change-me@db:5432/lawsuits_development}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-replace-with-a-long-random-string}
+      LAWSUITS_CSV_PATH: ${LAWSUITS_CSV_PATH:-/data/lawsuits_movements.csv}
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
+      LLM_MODEL: ${LLM_MODEL:-gemini-3.5-flash-lite}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-gemini-3.1-flash-lite}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-20}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - ./backend:/rails
+      - ./data:/data:ro
+      - ./docs/contracts:/docs/contracts:ro
+      - backend_bundle:/usr/local/bundle
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        HOST_UID: "${HOST_UID:-1000}"
+        HOST_GID: "${HOST_GID:-1000}"
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    environment:
+      VITE_API_PROXY_TARGET: http://api:3000
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - ./backend/schema.graphql:/backend/schema.graphql:ro
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  backend_bundle:
+  frontend_node_modules:

@@ -1,0 +1,168 @@
+# Fixture for Movements::Classifier (spec 04). Titles are real values from
+# data/lawsuits_movements.csv (183 distinct titles). Classification follows
+# docs/domains/legal-glossary.md section 3. Legal Expert must review every
+# line before this fixture is relied on by the classifier's test suite.
+#
+# expected: milestone | context | noise
+
+# ---------- Milestones (section 3.1) ----------
+- title: "Distribuído Livremente (por Sorteio) (movimentação exclusiva do distribuidor)"
+  expected: milestone
+- title: "Distribuição por Sorteio"
+  expected: milestone
+- title: "Recebida a Petição Inicial"
+  expected: milestone
+- title: "Contestação Juntada"
+  expected: milestone
+- title: "Réplica Juntada"
+  expected: milestone
+- title: "Designada Audiência de Conciliação"
+  expected: milestone
+- title: "Audiência Realizada"
+  expected: milestone
+- title: "Audiência Realizada Exitosa"
+  expected: milestone
+- title: "Audiência Realizada Inexitosa"
+  expected: milestone
+- title: "Audiência de Conciliação"
+  expected: milestone
+- title: "Termo de Audiência Expedido"
+  expected: milestone
+- title: "Termo de Audiência Digitalizado"
+  expected: milestone
+- title: "Pedido de Homologação de Acordo Juntado"
+  expected: milestone
+- title: "Homologada a Transação de Acordo ExtraJudicial"
+  expected: milestone
+- title: "Homologado o Acordo em Execução ou em Cumprimento de Sentença"
+  expected: milestone
+- title: "Julgada Procedente a Ação"
+  expected: milestone
+- title: "Julgada Procedente em Parte a Ação"
+  expected: milestone
+- title: "Julgada improcedente a ação"
+  expected: milestone
+- title: "Extinto o Processo sem Resolução do Mérito por Desistência"
+  expected: milestone
+- title: "Extinto o Processo sem Resolução do Mérito por Ausência das Condições da Ação"
+  expected: milestone
+- title: "Extinto o Processo sem Resolução do Mérito por Ausência de Pressupostos Processuais"
+  expected: milestone
+- title: "Extinta a Execução/Cumprimento da Sentença pela Satisfação da Obrigação"
+  expected: milestone
+- title: "Pedido de Extinção - Obrigação Satisfeita (art. 924, II, do CPC)"
+  expected: milestone
+- title: "Apelação/Razões Juntada"
+  expected: milestone
+- title: "Contrarrazões Juntada"
+  expected: milestone
+- title: "Acórdão registrado"
+  expected: milestone
+- title: "Julgado virtualmente"
+  expected: milestone
+- title: "Julgamento Virtual Iniciado"
+  expected: milestone
+- title: "Trânsito em julgado"
+  expected: milestone
+- title: "Trânsito em Julgado às partes"
+  expected: milestone
+- title: "Trânsito em Julgado às partes - com Baixa"
+  expected: milestone
+- title: "Certidão de Trânsito em Julgado com Baixa Expedida"
+  expected: milestone
+- title: "Execução/Cumprimento de Sentença Iniciada (o)"
+  expected: milestone
+- title: "Pedido de Expedição de Mandado de Levantamento Juntado"
+  expected: milestone
+- title: "Mandado de Levantamento Expedido"
+  expected: milestone
+- title: "Arquivado Definitivamente"
+  expected: milestone
+- title: "Baixa Definitiva"
+  expected: milestone
+- title: "Proferidas Outras Decisões não Especificadas"
+  expected: milestone
+
+# ---------- Context (section 3.2) ----------
+- title: "Conclusos para Sentença"
+  expected: context
+- title: "Conclusos para Decisão"
+  expected: context
+- title: "Conclusos para Despacho"
+  expected: context
+- title: "Conclusos para o Relator"
+  expected: context
+- title: "Petição Juntada"
+  expected: context
+- title: "Juntada de petição"
+  expected: context
+- title: "Documento Juntado"
+  expected: context
+- title: "Carta Expedida"
+  expected: context
+- title: "AR Positivo Juntado"
+  expected: context
+- title: "AR Negativo Juntado"
+  expected: context
+- title: "Suspensão do Prazo"
+  expected: context
+- title: "Prazo"
+  expected: context
+- title: "Remetidos os Autos para o Tribunal de Justiça/Colégio Recursal - Processo Digital"
+  expected: context
+- title: "Recebidos os Autos do Tribunal de Justiça"
+  expected: context
+- title: "Proferido Despacho de Mero Expediente"
+  expected: context
+- title: "Despacho"
+  expected: context
+- title: "Decisão"
+  expected: context
+
+# ---------- Noise (section 3.3) ----------
+- title: "Remetido ao DJE"
+  expected: noise
+- title: "Certidão de Publicação Expedida"
+  expected: noise
+- title: "Publicado em"
+  expected: noise
+- title: "Ato Ordinatório - Intimação - DJE"
+  expected: noise
+- title: "Certidão de Cartório Expedida"
+  expected: noise
+- title: "Expedido Certidão"
+  expected: noise
+- title: "Expedido Termo"
+  expected: noise
+- title: "Expedido Certidão de Baixa de Recurso"
+  expected: noise
+- title: "Processo Cadastrado"
+  expected: noise
+- title: "Processo encaminhado para a Distribuição de Recursos"
+  expected: noise
+- title: "Recebidos os Autos pela Entrada de Recursos"
+  expected: noise
+- title: "Processo encaminhado para o Processamento de Grupos e Câmaras"
+  expected: noise
+
+# ---------- Unknown titles (not in the glossary; classifier default) ----------
+- title: "Alteração de relator em cumprimento a despacho"
+  expected: context
+- title: "Correção da Categoria de Petição Avulsa"
+  expected: context
+- title: "Decisão Monocrática - Não-Conhecimento"
+  expected: context
+- title: "Determinada a Redistribuição dos Autos"
+  expected: context
+- title: "Mudança de Magistrado"
+  expected: context
+- title: "Realizado Cálculo de Tributos"
+  expected: context
+- title: "Resposta de Verificação de Endereço Juntado"
+  expected: context
+- title: "SAP - Indicação de Teleaudiência Juntada"
+  expected: context
+- title: "Subprocesso Cadastrado"
+  expected: context
+- title: "Transmitida a decisão monocrática à vara de origem (Expedido Certidão)"
+  expected: context

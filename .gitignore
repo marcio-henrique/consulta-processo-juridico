@@ -1,0 +1,40 @@
+# Challenge input: track only the CSV the importer needs.
+# The statement and the saved e-SAJ page (third-party assets) stay local.
+data/*
+!data/lawsuits_movements.csv
+
+# Secrets and local environment (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+backend/config/master.key
+backend/config/credentials/*.key
+
+# Ruby / Rails
+backend/log/*
+backend/tmp/*
+backend/storage/*
+backend/coverage/
+backend/.bundle/
+backend/vendor/bundle/
+backend/.cache/
+backend/.local/
+!backend/log/.keep
+!backend/tmp/.keep
+!backend/storage/.keep
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.vite/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

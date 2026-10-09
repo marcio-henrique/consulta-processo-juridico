@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Compares the generated BackendSchema against the contract at
+# docs/contracts/schema.graphql, ignoring descriptions, comments and
+# definition order. Prints the differences and exits 1 if there are any.
+#
+# Usage: bin/contract_check  (run inside the api container / CI)
+
+require "bundler/setup"
+require_relative "../config/boot"
+require_relative "../config/environment"
+
+require "graphql"
+
+CONTRACT_PATH = File.expand_path("../../docs/contracts/schema.graphql", __dir__)
+
+# Builds a sorted list of "signature lines" for a schema SDL string, one per
+# field/argument/enum value, independent of description text and ordering.
+# Example lines: "Query.lawsuit(number: String!): LawsuitPayload!"
+#                "enum ErrorCode: INVALID_CNJ"
+def signatures(sdl)
+  schema = GraphQL::Schema.from_definition(sdl)
+  lines = []
+
+  schema.types.each_value do |type|
+    name = type.graphql_name
+    next if name.nil? || name.start_with?("__") # introspection / anonymous types
+
+    if type < GraphQL::Schema::Enum
+      type.values.each_key { |v| lines << "enum #{name}: #{v}" }
+    elsif type.respond_to?(:fields) && (type < GraphQL::Schema::Object || type < GraphQL::Schema::InputObject || type < GraphQL::Schema::Interface)
+      type.fields.each_value do |field|
+        args = field.arguments.values.map { |a| "#{a.graphql_name}: #{a.type.to_type_signature}" }.sort.join(", ")
+        lines << "#{name}.#{field.graphql_name}(#{args}): #{field.type.to_type_signature}"
+      end
+    end
+  end
+
+  lines.sort
+end
+
+contract_sdl = File.read(CONTRACT_PATH)
+generated_sdl = BackendSchema.to_definition
+
+contract_lines = signatures(contract_sdl)
+generated_lines = signatures(generated_sdl)
+
+missing_from_backend = contract_lines - generated_lines
+extra_in_backend = generated_lines - contract_lines
+
+if missing_from_backend.empty? && extra_in_backend.empty?
+  puts "OK: backend/schema.graphql matches docs/contracts/schema.graphql"
+  exit 0
+end
+
+puts "MISMATCH between docs/contracts/schema.graphql and the generated schema."
+puts "Run `bin/rails graphql:schema:dump` and compare backend/schema.graphql by hand,"
+puts "or update docs/contracts/schema.graphql if the change was intentional."
+puts
+
+unless missing_from_backend.empty?
+  puts "In the contract but missing from the backend:"
+  missing_from_backend.each { |l| puts "  - #{l}" }
+end
+
+unless extra_in_backend.empty?
+  puts "In the backend but not in the contract:"
+  extra_in_backend.each { |l| puts "  + #{l}" }
+end
+
+exit 1
