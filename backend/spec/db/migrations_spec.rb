@@ -16,9 +16,10 @@ RSpec.describe "Database schema" do
     expect(index.unique).to be true
   end
 
-  it "enforces a unique index on users.email" do
-    index = connection.indexes("users").find { |i| i.columns == [ "email" ] }
+  it "enforces a case-insensitive unique index on users.email" do
+    index = connection.indexes("users").find { |i| i.name == "index_users_on_lower_email" }
     expect(index.unique).to be true
+    expect(index.columns).to match(/lower\(\(?email/)
   end
 
   it "enforces a unique index on sessions.token_digest" do
