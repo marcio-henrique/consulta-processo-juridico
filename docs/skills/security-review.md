@@ -44,3 +44,11 @@ Short report in the PR: blockers (none allowed to merge), fixes applied, accepte
 - Testing only the happy path of auth.
 - Trusting client-side validation or hidden buttons as access control.
 - Logging GraphQL variables for debugging and forgetting to remove it.
+
+## Docker hardening checks (SEC-4)
+```bash
+docker compose exec api id            # expect a non-root uid
+docker compose exec web id            # expect a non-root uid
+docker compose config | grep -A3 "db:" # no `ports:` on the db service
+grep -n "^\.env" .dockerignore backend/.dockerignore  # .env* excluded from build contexts
+```

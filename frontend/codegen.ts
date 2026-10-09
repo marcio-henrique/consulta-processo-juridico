@@ -9,6 +9,11 @@ const config: CodegenConfig = {
       presetConfig: {
         gqlTagName: 'gql',
       },
+      config: {
+        useTypeImports: true,
+        // Dates travel as ISO 8601 strings; formatting happens in lib/format.ts.
+        scalars: { ISO8601Date: 'string', ISO8601DateTime: 'string' },
+      },
     },
   },
   ignoreNoDocuments: true,

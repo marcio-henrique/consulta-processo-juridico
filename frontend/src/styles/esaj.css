@@ -1,0 +1,288 @@
+/*
+ * e-SAJ-like structure (muted labels, bold values, striped movements table,
+ * section titles with a bottom rule) without copying its assets.
+ * Works from 320 px; only the movements table may scroll inside its container.
+ */
+
+.app-header {
+  background: var(--color-brand);
+  border-bottom: 4px solid var(--color-accent);
+  color: var(--color-brand-text);
+}
+
+.app-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+}
+
+.app-header__brand {
+  color: var(--color-brand-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-header__brand:hover {
+  text-decoration: underline;
+}
+
+/* The focus ring must stay visible on the dark header (3:1 against it). */
+.app-header :focus-visible {
+  outline-color: var(--color-accent);
+}
+
+.app-header__user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.app-header__email {
+  overflow-wrap: anywhere;
+}
+
+.app-header .button--link {
+  color: var(--color-brand-text);
+  min-height: 1.5rem;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.app-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+/* Home and auth pages: a single centered card. */
+.home,
+.auth-card {
+  max-width: 32rem;
+  margin: var(--space-8) auto;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius);
+}
+
+.auth-card__alt {
+  margin: var(--space-4) 0 0;
+}
+
+.search-form .button,
+.auth-card .button[type='submit'] {
+  width: 100%;
+}
+
+/* Lawsuit page */
+.lawsuit-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.lawsuit-header__number {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius);
+}
+
+.section__title {
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-accent);
+  color: var(--color-brand);
+}
+
+.data-list {
+  display: grid;
+  gap: var(--space-3) var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin: 0;
+}
+
+.data-list__row {
+  display: flex;
+  flex-direction: column;
+}
+
+.data-list dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+}
+
+.data-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Summary */
+.summary__disclaimer {
+  margin: var(--space-3) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+}
+
+.summary__error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.summary__loading {
+  color: var(--color-muted);
+}
+
+/* Movements */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.movements {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.movements th,
+.movements td {
+  padding: var(--space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.movements thead th {
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+}
+
+.movements tbody tr:nth-child(even) {
+  background: var(--color-stripe);
+}
+
+.movements__date {
+  white-space: nowrap;
+  width: 7.5rem;
+}
+
+.movement__title {
+  display: block;
+}
+
+.movement__content {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.movement__content--collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.movements__body .button--link {
+  min-height: 1.5rem; /* still above the 24 px minimum target (WCAG 2.5.8) */
+  margin-top: var(--space-1);
+}
+
+.movements__status {
+  margin: var(--space-3) 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-small);
+}
+
+.movements__status:focus {
+  outline: none;
+}
+
+/* Loading skeletons (the shimmer stops under prefers-reduced-motion). */
+.skeleton {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skeleton--block {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius);
+}
+
+.skeleton__line {
+  display: block;
+  height: 1rem;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #e4e7eb 25%, #f0f3f6 50%, #e4e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton__line--short {
+  width: 60%;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.page-state {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.page-state .alert {
+  margin: 0;
+}
+
+/* Narrow screens. The movements table keeps real table semantics and scrolls
+   inside its own container (.table-scroll) instead of being restyled with
+   display:block, which would drop the table roles in some browsers. */
+@media (max-width: 30rem) {
+  .home,
+  .auth-card {
+    margin: var(--space-4) auto;
+    padding: var(--space-4);
+  }
+
+  .movements__date {
+    width: 6.5rem;
+  }
+}

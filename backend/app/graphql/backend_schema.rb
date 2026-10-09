@@ -7,6 +7,7 @@ class BackendSchema < GraphQL::Schema
   # Query limits (security.md, architecture.md section 4).
   max_depth 10
   max_complexity 200
+  Security::GraphqlLimits.apply(self)
 
   GENERIC_ERROR_MESSAGE = "Erro interno. Tente novamente.".freeze
 

@@ -1,0 +1,37 @@
+query Lawsuit($number: String!, $first: Int = 25, $after: String) {
+  lawsuit(number: $number) {
+    errors {
+      code
+      message
+      field
+    }
+    lawsuit {
+      number
+      forum
+      court
+      numberOfAuthors
+      movementsCount
+      value {
+        amount
+        formatted
+      }
+      latestSummary {
+        id
+        body
+        generatedAt
+      }
+      movements(first: $first, after: $after) {
+        nodes {
+          id
+          date
+          title
+          content
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}

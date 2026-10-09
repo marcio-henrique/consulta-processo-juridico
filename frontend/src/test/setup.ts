@@ -1,8 +1,14 @@
 import '@testing-library/jest-dom/vitest'
-import 'vitest-axe/extend-expect'
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { cleanup } from '@testing-library/react'
+import { afterAll, afterEach, beforeAll, expect } from 'vitest'
+import * as axeMatchers from 'vitest-axe/matchers'
 import { server } from './msw/server'
 
+expect.extend(axeMatchers)
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  cleanup()
+  server.resetHandlers()
+})
 afterAll(() => server.close())

@@ -61,6 +61,9 @@ docker compose run --rm api bin/rails "import:lawsuits[/data/lawsuits_movements.
 
 The task exits with status 1 and a clear message if the file is missing, unreadable, malformed or lacks a required header.
 
+### First account
+There is no seeded user. Open `http://localhost:5173/`, you are sent to the login page; choose **Criar conta** and register with any e-mail and a password of 10 to 72 characters. The session lasts 14 days; **Sair** ends it. Sign-in and sign-up are throttled (5 attempts per minute, 10 sign-ups per hour per IP).
+To try the lookup, search `1001399-31.2023.8.26.0070` (found). `1002271-82.2025.8.26.0003` is a valid CNJ number that is not in the data and shows the not-found state.
 ### AI summary (LLM)
 The summary is generated on demand by `generateSummary` and cached per lawsuit, movements, prompt version and model (see [ai-summary](docs/domains/ai-summary.md)). Configure it in `.env`:
 - `LLM_PROVIDER`: `auto` (default; Gemini when `GEMINI_API_KEY` is set, otherwise the offline `fake` provider), `gemini` or `fake`. The test environment always uses `fake`, so tests never reach the network.
@@ -92,6 +95,10 @@ docker compose run --rm web npm run typecheck
 docker compose run --rm web npm test -- --run --coverage
 docker compose run --rm web npm run build
 
+# Frontend: end-to-end flow with axe checks against the running stack (docker compose up).
+# Runs on the host (Node 22) against http://localhost:5173. Needs a browser: `npx playwright install chromium`,
+# or set PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome to reuse a local Chrome.
+(cd frontend && npm ci && npm run test:e2e)
 # Frontend: regenerate GraphQL types from backend/schema.graphql after a schema change
 docker compose run --rm web npm run codegen
 ```
