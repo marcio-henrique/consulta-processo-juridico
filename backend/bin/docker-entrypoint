@@ -9,6 +9,8 @@ if [[ "$*" == *"rails server"* ]]; then
     done
   fi
   bin/rails db:prepare
+  # Import the CSV when the lawsuits table is empty (no-op on later starts).
+  bin/rails db:seed
 fi
 
 exec "${@}"

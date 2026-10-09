@@ -95,15 +95,23 @@ Rows skipped: 0
 Warnings: 0
 ```
 
-Skipped rows and warnings include the CSV line number and reason. Exit code is non-zero only when the file is missing/unreadable or required headers are absent.
+Skipped rows and warnings are listed below the summary, each with the CSV line number (the physical line where the record starts; quoted multi-line fields are accounted for) and the reason.
+Exit code is non-zero only when the file is missing, unreadable, not valid UTF-8, malformed CSV, or required headers are absent (`Imports::FatalError`).
+
+Implementation notes (spec 02):
+
+- A lawsuit is **unchanged** when its attributes and its ordered movements `(occurred_on, title, content, source_row)` match what is stored; nothing is written. If only the attributes changed, only the lawsuit is updated; movements are replaced only when they differ.
+- One warning is recorded per **row** whose lawsuit attributes differ from the lawsuit's first row (listing the differing columns). The first row wins.
+- If the database rejects one lawsuit, its transaction rolls back, all of its rows are reported as skipped, and the import continues.
+- Blank lines are ignored and do not consume a `source_row`; rows skipped for errors do (`source_row` is the position in the file).
 
 ## 7. Entry points
 
 | Entry point | Behavior |
 |-------------|----------|
 | `bin/rails import:lawsuits[path]` | Default path `../data/lawsuits_movements.csv` (configurable via `LAWSUITS_CSV_PATH`) |
-| `bin/rails db:seed` | Calls the importer if the `lawsuits` table is empty |
-| Docker entrypoint (`api`) | Runs `db:prepare`; imports when the table is empty |
+| `bin/rails db:seed` | Calls the importer if the `lawsuits` table is empty, otherwise prints that the import was skipped |
+| Docker entrypoint (`api`) | Runs `db:prepare` then `db:seed`; the seed imports when the table is empty (a missing CSV stops the container with a clear message) |
 
 ## 8. Test fixtures
 

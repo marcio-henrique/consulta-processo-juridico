@@ -44,7 +44,7 @@ Edit `.env` and set:
 docker compose up --build
 ```
 
-This builds and starts `db` (Postgres), `api` (Rails, port `3000`) and `web` (Vite dev server, port `5173`). The API entrypoint waits for the database and runs `db:prepare` automatically.
+This builds and starts `db` (Postgres), `api` (Rails, port `3000`) and `web` (Vite dev server, port `5173`). The API entrypoint waits for the database, runs `db:prepare` and imports the CSV when the `lawsuits` table is empty.
 
 - Health check: `curl http://localhost:3000/up` should return `200`.
 - Frontend: open `http://localhost:5173/`.
@@ -52,11 +52,14 @@ This builds and starts `db` (Postgres), `api` (Rails, port `3000`) and `web` (Vi
 
 ### 3. Import the challenge data
 
-The CSV importer is implemented by spec `02-lawsuit-data-import` (not yet done as of this foundation). Once it lands:
+On an empty database the `api` container imports `data/lawsuits_movements.csv` automatically at startup (via `db:seed`) and prints a report (100 lawsuits, 5568 movements, 0 skipped rows). Later starts skip the import. To run it by hand (idempotent, safe to repeat):
 
 ```bash
-docker compose run --rm api bin/rails import:lawsuits
+docker compose run --rm api bin/rails import:lawsuits                              # path from LAWSUITS_CSV_PATH
+docker compose run --rm api bin/rails "import:lawsuits[/data/lawsuits_movements.csv]"
 ```
+
+The task exits with status 1 and a clear message if the file is missing, unreadable, malformed or lacks a required header.
 
 ### 4. Run the tests
 

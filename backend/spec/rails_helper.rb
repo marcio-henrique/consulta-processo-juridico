@@ -26,6 +26,13 @@ WebMock.disable_net_connect!(allow_localhost: false)
 # require only the support files necessary.
 Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
 
+# The test database is separate from development (see config/database.yml);
+# create it on first run so `rspec` works without an extra setup command.
+begin
+  ActiveRecord::Base.connection.execute("SELECT 1")
+rescue ActiveRecord::NoDatabaseError
+  ActiveRecord::Tasks::DatabaseTasks.create_current("test")
+end
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
 begin
