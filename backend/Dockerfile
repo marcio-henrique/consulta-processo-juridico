@@ -7,6 +7,9 @@
 ARG RUBY_VERSION=3.3.12
 FROM docker.io/library/ruby:$RUBY_VERSION-slim-bookworm
 
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+
 WORKDIR /rails
 
 # Runtime + build packages (kept in one layer; this image is dev-only, size is not a priority)
@@ -22,14 +25,16 @@ ENV BUNDLE_PATH="/usr/local/bundle" \
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-# Non-root user; uid/gid 1000 matches the typical host dev user so bind-mounted
-# files created inside the container stay editable on the host.
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails /rails "${BUNDLE_PATH}"
-USER 1000:1000
+# Non-root user; defaults to 1000 but matches the host user when
+# HOST_UID/HOST_GID build args are passed, so bind-mounted and named-volume
+# files created inside the container stay writable at runtime (the api
+# service's docker-compose.yml sets `user:` to the same HOST_UID/HOST_GID).
+RUN groupadd --system --gid ${HOST_GID} rails 2>/dev/null || true && \
+    useradd rails --uid ${HOST_UID} --gid ${HOST_GID} --create-home --shell /bin/bash 2>/dev/null || true && \
+    chown -R ${HOST_UID}:${HOST_GID} /rails "${BUNDLE_PATH}"
+USER ${HOST_UID}:${HOST_GID}
 
-COPY --chown=rails:rails . .
+COPY --chown=${HOST_UID}:${HOST_GID} . .
 
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
