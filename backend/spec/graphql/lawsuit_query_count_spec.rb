@@ -37,10 +37,11 @@ RSpec.describe "Query.lawsuit SQL query count", type: :graphql do
     lawsuit = create(:lawsuit, number: number)
     create_list(:movement, 40, lawsuit: lawsuit)
 
-    execute_graphql(query, variables: { number: number, first: 1 }) # warm up prepared statements
+    user = create(:user) # created outside the counted blocks
+    execute_graphql(query, variables: { number: number, first: 1 }, user: user) # warm up prepared statements
 
-    small = count_queries { execute_graphql(query, variables: { number: number, first: 2 }) }
-    large = count_queries { execute_graphql(query, variables: { number: number, first: 40 }) }
+    small = count_queries { execute_graphql(query, variables: { number: number, first: 2 }, user: user) }
+    large = count_queries { execute_graphql(query, variables: { number: number, first: 40 }, user: user) }
 
     # lawsuit lookup + movements page + movements count
     expect(small).to be <= 3

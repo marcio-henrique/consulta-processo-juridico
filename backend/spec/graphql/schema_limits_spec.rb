@@ -38,7 +38,7 @@ RSpec.describe "BackendSchema limits and error handling", type: :graphql do
 
       BackendSchema.execute(
         '{ lawsuit(number: "1001399-31.2023.8.26.0070") { errors { code } } }',
-        context: { current_user: nil, request_id: "req-123" }
+        context: { current_user: create(:user), request_id: "req-123" }
       )
 
       expect(Rails.logger).to have_received(:error).with(/request_id=req-123/)

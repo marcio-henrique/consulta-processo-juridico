@@ -1,10 +1,15 @@
 module Mutations
   # Mutation.generateSummary (ADR-0003): validates the number, then returns the
   # cached summary or generates one synchronously. Failures are data
-  # (UserError), never internal details. Authentication and the per-user
-  # throttle belong to spec 06 (guard).
+  # (UserError), never internal details. Authentication is enforced by the
+  # schema guard; the per-user throttle (10 per minute) runs first so a
+  # flooding user cannot spend LLM budget.
   class GenerateSummary
     def self.call(lawsuit_number:, context:)
+      unless Auth::Throttle.allow?(:generate_summary_user, context[:current_user].id)
+        return payload(nil, Auth::Throttle.rate_limited_error)
+      end
+
       found = Lawsuits::Find.call(lawsuit_number)
       return payload(nil, error(found.error_code, found.error_code == :INVALID_CNJ ? "number" : nil)) unless found.success?
 

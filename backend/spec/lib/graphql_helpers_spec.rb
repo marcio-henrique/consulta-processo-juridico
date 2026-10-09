@@ -4,7 +4,7 @@ RSpec.describe "GraphqlHelpers#execute_graphql" do
   include GraphqlHelpers
 
   it "executes a query against BackendSchema and returns a symbolized hash" do
-    result = execute_graphql("{ __typename }")
+    result = execute_graphql("{ __typename }", user: nil)
 
     expect(result[:data][:__typename]).to eq("Query")
   end

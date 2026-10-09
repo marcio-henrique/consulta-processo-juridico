@@ -1,6 +1,17 @@
 require "rails_helper"
 
 RSpec.describe "POST /graphql", type: :request do
+  # Lookups require a session (spec 06): sign up through the real endpoint so
+  # the cookie jar of this integration session carries the cookie.
+  def sign_up_over_http
+    post "/graphql",
+      params: {
+        query: "mutation($i: SignUpInput!) { signUp(input: $i) { errors { code } } }",
+        variables: { i: { email: "ana@example.com", password: "a-very-safe-password" } }
+      }.to_json,
+      headers: { "CONTENT_TYPE" => "application/json" }
+  end
+
   it "returns 200 and executes the query for a JSON POST" do
     post "/graphql",
       params: { query: "{ __typename }" }.to_json,
@@ -13,6 +24,7 @@ RSpec.describe "POST /graphql", type: :request do
 
   it "serves the lawsuit query over HTTP, with expected failures as data" do
     create(:lawsuit, number: "1001399-31.2023.8.26.0070")
+    sign_up_over_http
     query = 'query($n: String!) { lawsuit(number: $n) { lawsuit { number } errors { code } } }'
 
     post "/graphql",
