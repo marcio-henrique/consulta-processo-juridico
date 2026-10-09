@@ -4,6 +4,7 @@ mutation GenerateSummary($lawsuitNumber: String!) {
       id
       body
       generatedAt
+      myFeedback
     }
     errors {
       code

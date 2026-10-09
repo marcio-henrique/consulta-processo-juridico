@@ -11,7 +11,9 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']
 
 async function expectNoSeriousViolations(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze()
-  const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
+  const serious = results.violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  )
   expect(serious.map((v) => `${v.id}: ${v.help}`)).toEqual([])
 }
 
@@ -39,9 +41,28 @@ test('anonymous visit, sign up, lookup, paging, not found and sign out', async (
   await expect(page.getByRole('heading', { level: 1, name: `Processo ${KNOWN}` })).toBeVisible()
   await expect(page.getByText(email)).toBeVisible()
   await expect(page.locator('dd', { hasText: 'R$ 10.000,00' })).toBeVisible()
+  await expect(page.locator('dd', { hasText: 'Foro de Batatais' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Resumo do processo' })).toBeVisible()
   await expect(page.getByTestId('summary-paragraph').first()).toBeVisible({ timeout: 60_000 })
   await expect(page.getByText(/Resumo gerado por inteligência artificial/)).toBeVisible()
+  await expect(page.getByRole('row')).toHaveCount(26)
+
+  // Rate the summary: vote, change it, reload and see the vote persisted.
+  const helpful = page.getByRole('button', { name: /^(✓ )?Útil$/ })
+  const notHelpful = page.getByRole('button', { name: /Não foi útil/ })
+  await expect(page.getByText('Este resumo foi útil?')).toBeVisible()
+  await expect(helpful).toHaveAttribute('aria-pressed', 'false')
+  await helpful.click()
+  await expect(page.getByText('Obrigado pelo feedback.')).toBeVisible()
+  await expect(helpful).toHaveAttribute('aria-pressed', 'true')
+  await notHelpful.click()
+  await expect(notHelpful).toHaveAttribute('aria-pressed', 'true')
+  await expect(helpful).toHaveAttribute('aria-pressed', 'false')
+  await page.reload()
+  await expect(page.getByRole('button', { name: /Não foi útil/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await expect(page.getByRole('row')).toHaveCount(26)
   await expectNoSeriousViolations(page)
 
@@ -53,11 +74,15 @@ test('anonymous visit, sign up, lookup, paging, not found and sign out', async (
   await page.getByRole('link', { name: 'Nova consulta' }).click()
   await page.getByLabel('Número do processo').fill('123')
   await page.getByRole('button', { name: 'Consultar' }).click()
-  await expect(page.getByRole('alert')).toHaveText('Número de processo inválido. Confira os dígitos.')
+  await expect(page.getByRole('alert')).toHaveText(
+    'Número de processo inválido. Confira os dígitos.',
+  )
   await page.getByLabel('Número do processo').fill(NOT_IN_DATA.replace(/\D/g, ''))
   await expect(page.getByLabel('Número do processo')).toHaveValue(NOT_IN_DATA)
   await page.getByRole('button', { name: 'Consultar' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Processo não encontrado na base.' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Processo não encontrado na base.' }),
+  ).toBeVisible()
   await expectNoSeriousViolations(page)
 
   // The session cookie is HttpOnly and SameSite=Lax; nothing in web storage.
@@ -76,6 +101,8 @@ test('layout reflows at 320 px without page-level horizontal scroll', async ({ p
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto('/login')
   await page.getByLabel(/^E-mail/).waitFor()
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
   expect(overflow).toBeLessThanOrEqual(0)
 })

@@ -10,6 +10,7 @@ const SUMMARY_FRAGMENT = gql`
     id
     body
     generatedAt
+    myFeedback
   }
 `
 

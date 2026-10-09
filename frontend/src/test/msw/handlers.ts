@@ -24,7 +24,8 @@ export function buildMovements(total: number) {
     // Newest first, like the API.
     date: new Date(Date.UTC(2024, 5, 12 - index)).toISOString().slice(0, 10),
     title: index === 0 ? 'Certidão de Publicação Expedida' : `Movimentação ${index + 1}`,
-    content: index === 1 ? LONG_CONTENT : index === 2 ? null : `Conteúdo ${index + 1}\nSegunda linha`,
+    content:
+      index === 1 ? LONG_CONTENT : index === 2 ? null : `Conteúdo ${index + 1}\nSegunda linha`,
   }))
 }
 
@@ -63,6 +64,7 @@ export function lawsuitPayload(
           id: '10',
           body: SUMMARY_BODY,
           generatedAt: '2026-10-08T12:00:00Z',
+          myFeedback: null,
         }
       : null,
     movements: {
@@ -94,7 +96,11 @@ export const handlers = [
             __typename: 'LawsuitPayload',
             lawsuit: null,
             errors: [
-              userError('INVALID_CNJ', 'Número de processo inválido. Confira os dígitos.', 'number'),
+              userError(
+                'INVALID_CNJ',
+                'Número de processo inválido. Confira os dígitos.',
+                'number',
+              ),
             ],
           },
         },
@@ -125,6 +131,7 @@ export const handlers = [
             id: '11',
             body: SUMMARY_BODY,
             generatedAt: '2026-10-09T12:00:00Z',
+            myFeedback: null,
           },
           errors: [],
         },
@@ -132,6 +139,21 @@ export const handlers = [
     }),
   ),
 
+  graphql.mutation('RateSummary', ({ variables }) =>
+    HttpResponse.json({
+      data: {
+        rateSummary: {
+          __typename: 'RateSummaryPayload',
+          feedback: {
+            __typename: 'SummaryFeedback',
+            summaryId: variables.summaryId,
+            helpful: variables.helpful,
+          },
+          errors: [],
+        },
+      },
+    }),
+  ),
   graphql.query('Me', () => HttpResponse.json({ data: { me: DEMO_USER } })),
 
   graphql.mutation('SignIn', ({ variables }) => {
@@ -151,10 +173,14 @@ export const handlers = [
   graphql.mutation('SignUp', ({ variables }) => {
     const { email, password } = variables.input
     const errors = []
-    if (email === 'taken@example.com') errors.push(userError('VALIDATION_FAILED', 'Este e-mail já está em uso.', 'email'))
-    else if (!email.includes('@')) errors.push(userError('VALIDATION_FAILED', 'Informe um e-mail válido.', 'email'))
+    if (email === 'taken@example.com')
+      errors.push(userError('VALIDATION_FAILED', 'Este e-mail já está em uso.', 'email'))
+    else if (!email.includes('@'))
+      errors.push(userError('VALIDATION_FAILED', 'Informe um e-mail válido.', 'email'))
     if (password.length < 10) {
-      errors.push(userError('VALIDATION_FAILED', 'A senha deve ter de 10 a 72 caracteres.', 'password'))
+      errors.push(
+        userError('VALIDATION_FAILED', 'A senha deve ter de 10 a 72 caracteres.', 'password'),
+      )
     }
     return HttpResponse.json({
       data: {

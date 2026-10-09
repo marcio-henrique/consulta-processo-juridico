@@ -1,4 +1,5 @@
 import { splitParagraphs } from '../lib/format'
+import { FeedbackButtons } from './FeedbackButtons'
 
 export const DISCLAIMER =
   'Resumo gerado por inteligência artificial a partir das movimentações do processo. Não substitui a análise de um advogado.'
@@ -6,12 +7,15 @@ export const DISCLAIMER =
 type Props = {
   status: 'ready' | 'loading' | 'error'
   body?: string
+  /** Id and current vote of the summary; the vote buttons show only for a ready summary. */
+  summaryId?: string
+  myFeedback?: boolean | null
   onRetry: () => void
 }
 
 // The summary is plain text from the LLM: it is only ever rendered as React
 // text nodes (never as HTML). Paragraphs are split on blank lines.
-export function SummaryCard({ status, body, onRetry }: Props) {
+export function SummaryCard({ status, body, summaryId, myFeedback, onRetry }: Props) {
   return (
     <section className="section summary" aria-labelledby="summary-title">
       <h2 id="summary-title" className="section__title">
@@ -48,6 +52,9 @@ export function SummaryCard({ status, body, onRetry }: Props) {
         ) : null}
       </div>
 
+      {status === 'ready' && summaryId ? (
+        <FeedbackButtons summaryId={summaryId} value={myFeedback} />
+      ) : null}
       <p className="summary__disclaimer">{DISCLAIMER}</p>
     </section>
   )

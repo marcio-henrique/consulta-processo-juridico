@@ -3,12 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 import { SUMMARY_BODY } from '../test/msw/handlers'
+import { renderWithProviders } from '../test/render'
 import { DISCLAIMER, SummaryCard } from './SummaryCard'
 
 describe('SummaryCard', () => {
   it('shows the title, the paragraphs and the disclaimer when ready', () => {
     render(<SummaryCard status="ready" body={SUMMARY_BODY} onRetry={vi.fn()} />)
-    expect(screen.getByRole('heading', { level: 2, name: 'Resumo do processo' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Resumo do processo' }),
+    ).toBeInTheDocument()
     const paragraphs = screen.getAllByTestId('summary-paragraph')
     expect(paragraphs).toHaveLength(3)
     expect(paragraphs[0]).toHaveTextContent(/^O processo 1001399/)
@@ -49,8 +52,37 @@ describe('SummaryCard', () => {
     expect(screen.getByText('<img src=x onerror="alert(1)">')).toBeInTheDocument()
   })
 
-  it.each(['ready', 'loading', 'error'] as const)('has no accessibility violations (%s)', async (status) => {
-    const { container } = render(<SummaryCard status={status} body={SUMMARY_BODY} onRetry={vi.fn()} />)
-    expect(await axe(container)).toHaveNoViolations()
+  it.each(['loading', 'error'] as const)(
+    'hides the vote buttons while the summary is %s',
+    (status) => {
+      renderWithProviders(
+        <SummaryCard status={status} body={SUMMARY_BODY} summaryId="10" onRetry={vi.fn()} />,
+      )
+      expect(screen.queryByText('Este resumo foi útil?')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Útil/ })).not.toBeInTheDocument()
+    },
+  )
+
+  it('shows the vote buttons only for a ready summary with an id', () => {
+    renderWithProviders(
+      <SummaryCard
+        status="ready"
+        body={SUMMARY_BODY}
+        summaryId="10"
+        myFeedback
+        onRetry={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /Útil/ })).toHaveAttribute('aria-pressed', 'true')
   })
+
+  it.each(['ready', 'loading', 'error'] as const)(
+    'has no accessibility violations (%s)',
+    async (status) => {
+      const { container } = render(
+        <SummaryCard status={status} body={SUMMARY_BODY} onRetry={vi.fn()} />,
+      )
+      expect(await axe(container)).toHaveNoViolations()
+    },
+  )
 })
