@@ -32,6 +32,8 @@ jobs:
       RAILS_ENV: test
       DATABASE_URL: postgres://lawsuits:change-me@localhost:5432/lawsuits_test
       SECRET_KEY_BASE: ci-only-secret-key-base-not-used-for-anything-real
+      # Lets the real-data specs find the tracked CSV (they default to /data, which only exists in Docker).
+      LAWSUITS_CSV_PATH: ${{ github.workspace }}/data/lawsuits_movements.csv
     steps:
       - uses: actions/checkout@v4
 
@@ -60,8 +62,11 @@ jobs:
           bundle exec bundler-audit update
           bundle exec bundler-audit check
 
+      # schema:load, not db:prepare: db:prepare seeds a fresh database, which
+      # would import the 100 real lawsuits and break the specs that expect an
+      # empty test database.
       - name: Prepare database
-        run: bin/rails db:prepare
+        run: bin/rails db:schema:load
 
       - name: Schema contract check
         run: bin/contract_check
