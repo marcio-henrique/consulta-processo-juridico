@@ -32,10 +32,13 @@ development:
 # Do not set this db to the same as development or production.
 # Uses the same connection as development but a different database name,
 # so a single Postgres instance (one compose service) serves both.
+# The name must be derived inside the URL: when `url` is set it wins over a
+# separate `database:` key, which used to make the test suite run against the
+# development database (and break once the CSV was imported there). In CI the
+# URL already ends in "_test", so the substitution is a no-op.
 test:
   <<: *default
-  url: <%= ENV["DATABASE_URL"] %>
-  database: <%= ENV.fetch("POSTGRES_DB", "backend_development").sub(/development\z/, "test") %>
+  url: <%= ENV["DATABASE_URL"].to_s.sub(/development(\?.*)?\z/, 'test\1') %>
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
