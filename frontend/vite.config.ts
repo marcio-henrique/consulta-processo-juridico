@@ -9,7 +9,10 @@ export default defineConfig({
     proxy: {
       '/graphql': {
         target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000',
-        changeOrigin: true,
+        // Keep the browser's Host header: the API compares the Origin header
+        // with the request host (CSRF check, spec 06), so rewriting Host to
+        // the api container would make every POST a 403.
+        changeOrigin: false,
       },
     },
   },

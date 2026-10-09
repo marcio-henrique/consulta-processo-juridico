@@ -1,0 +1,9 @@
+mutation SignOut {
+  signOut {
+    success
+    errors {
+      code
+      message
+    }
+  }
+}

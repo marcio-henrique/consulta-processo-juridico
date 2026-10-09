@@ -1,0 +1,13 @@
+mutation GenerateSummary($lawsuitNumber: String!) {
+  generateSummary(lawsuitNumber: $lawsuitNumber) {
+    summary {
+      id
+      body
+      generatedAt
+    }
+    errors {
+      code
+      message
+    }
+  }
+}
