@@ -46,8 +46,9 @@ module Types
       }
     end
 
+    # Cache lookup only; the LLM is never called from a query (ADR-0003).
     def latest_summary
-      raise NotImplementedError, "implemented in spec 04"
+      Summary.current_for(object)
     end
   end
 end
