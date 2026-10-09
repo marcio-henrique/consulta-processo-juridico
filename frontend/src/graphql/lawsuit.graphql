@@ -19,6 +19,7 @@ query Lawsuit($number: String!, $first: Int = 25, $after: String) {
         id
         body
         generatedAt
+        myFeedback
       }
       movements(first: $first, after: $after) {
         nodes {

@@ -27,7 +27,9 @@ function renderLawsuit(number: string) {
 describe('LawsuitPage', () => {
   it('shows the header, data, cached summary and movements in this order', async () => {
     const { container } = renderLawsuit(DEMO_NUMBER)
-    expect(await screen.findByRole('heading', { level: 1, name: /1001399-31\.2023\.8\.26\.0070/ })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /1001399-31\.2023\.8\.26\.0070/ }),
+    ).toBeInTheDocument()
 
     const headings = screen.getAllByRole('heading').map((h) => h.textContent)
     expect(headings).toEqual([
@@ -69,7 +71,9 @@ describe('LawsuitPage', () => {
 
   it('shows skeletons while loading, with the rest of the page usable', async () => {
     renderLawsuit(DEMO_NUMBER)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Processo 1001399-31.2023.8.26.0070')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Processo 1001399-31.2023.8.26.0070',
+    )
     expect(screen.getByText('Carregando processo…')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Nova consulta' })).toBeInTheDocument()
     await screen.findByText('Dados do processo')
@@ -81,13 +85,18 @@ describe('LawsuitPage', () => {
       await screen.findByRole('heading', { level: 1, name: 'Processo não encontrado na base.' }),
     ).toBeInTheDocument()
     expect(screen.getByText(/Somente processos importados/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Consultar outro processo' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Consultar outro processo' })).toHaveAttribute(
+      'href',
+      '/',
+    )
     expect(document.title).toBe('Processo não encontrado | Consulta de Processo')
   })
 
   it('shows the not-found state for an invalid CNJ in the URL', async () => {
     renderLawsuit('123')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Processo não encontrado na base.' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Processo não encontrado na base.' }),
+    ).toBeInTheDocument()
   })
 
   it('shows a generic error with retry on network failure, hiding technical details', async () => {
@@ -104,7 +113,9 @@ describe('LawsuitPage', () => {
   })
 
   it('shows the generic error when the API answers with a server error status', async () => {
-    server.use(graphql.query('Lawsuit', () => HttpResponse.json({ errors: [{ message: 'secret detail' }] })))
+    server.use(
+      graphql.query('Lawsuit', () => HttpResponse.json({ errors: [{ message: 'secret detail' }] })),
+    )
     renderLawsuit(DEMO_NUMBER)
     const alert = await screen.findByRole('alert')
     expect(alert).not.toHaveTextContent('secret detail')
@@ -112,7 +123,9 @@ describe('LawsuitPage', () => {
 
   it('shows the canonical number returned by the API for a digits-only URL', async () => {
     renderLawsuit('10013993120238260070')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Processo 1001399-31.2023.8.26.0070' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Processo 1001399-31.2023.8.26.0070' }),
+    ).toBeInTheDocument()
   })
 
   describe('summary generation', () => {
@@ -124,7 +137,12 @@ describe('LawsuitPage', () => {
           return HttpResponse.json({
             data: {
               generateSummary: {
-                summary: { id: '11', body: SUMMARY_BODY, generatedAt: '2026-10-09T12:00:00Z' },
+                summary: {
+                  id: '11',
+                  body: SUMMARY_BODY,
+                  generatedAt: '2026-10-09T12:00:00Z',
+                  myFeedback: null,
+                },
                 errors: [],
               },
             },
@@ -152,33 +170,43 @@ describe('LawsuitPage', () => {
       expect(screen.getAllByRole('row').length).toBeGreaterThan(1)
     })
 
-    it.each(['SUMMARY_UNAVAILABLE', 'RATE_LIMITED'])('shows an error with retry on %s', async (code) => {
-      const user = userEvent.setup()
-      let calls = 0
-      server.use(
-        graphql.mutation('GenerateSummary', () => {
-          calls += 1
-          if (calls === 1) {
+    it.each(['SUMMARY_UNAVAILABLE', 'RATE_LIMITED'])(
+      'shows an error with retry on %s',
+      async (code) => {
+        const user = userEvent.setup()
+        let calls = 0
+        server.use(
+          graphql.mutation('GenerateSummary', () => {
+            calls += 1
+            if (calls === 1) {
+              return HttpResponse.json({
+                data: { generateSummary: { summary: null, errors: [userError(code, 'x')] } },
+              })
+            }
             return HttpResponse.json({
-              data: { generateSummary: { summary: null, errors: [userError(code, 'x')] } },
-            })
-          }
-          return HttpResponse.json({
-            data: {
-              generateSummary: {
-                summary: { id: '12', body: SUMMARY_BODY, generatedAt: '2026-10-09T12:00:00Z' },
-                errors: [],
+              data: {
+                generateSummary: {
+                  summary: {
+                    id: '12',
+                    body: SUMMARY_BODY,
+                    generatedAt: '2026-10-09T12:00:00Z',
+                    myFeedback: null,
+                  },
+                  errors: [],
+                },
               },
-            },
-          })
-        }),
-      )
-      renderLawsuit(NO_SUMMARY_NUMBER)
-      expect(await screen.findByText('Não foi possível gerar o resumo agora.')).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Tentar novamente' }))
-      await waitFor(() => expect(screen.getAllByTestId('summary-paragraph')).toHaveLength(3))
-      expect(calls).toBe(2)
-    })
+            })
+          }),
+        )
+        renderLawsuit(NO_SUMMARY_NUMBER)
+        expect(
+          await screen.findByText('Não foi possível gerar o resumo agora.'),
+        ).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+        await waitFor(() => expect(screen.getAllByTestId('summary-paragraph')).toHaveLength(3))
+        expect(calls).toBe(2)
+      },
+    )
 
     it('shows an error with retry when the mutation fails on the network', async () => {
       server.use(graphql.mutation('GenerateSummary', () => HttpResponse.error()))

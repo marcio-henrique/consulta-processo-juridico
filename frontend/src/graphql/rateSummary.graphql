@@ -1,0 +1,12 @@
+mutation RateSummary($summaryId: ID!, $helpful: Boolean!) {
+  rateSummary(summaryId: $summaryId, helpful: $helpful) {
+    feedback {
+      summaryId
+      helpful
+    }
+    errors {
+      code
+      message
+    }
+  }
+}

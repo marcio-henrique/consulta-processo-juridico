@@ -66,7 +66,11 @@ export function LawsuitPage() {
   }
 
   const { movements } = lawsuit
-  const summaryStatus = lawsuit.latestSummary ? 'ready' : summary.status === 'error' ? 'error' : 'loading'
+  const summaryStatus = lawsuit.latestSummary
+    ? 'ready'
+    : summary.status === 'error'
+      ? 'error'
+      : 'loading'
 
   async function loadMore() {
     setLoadingMore(true)
@@ -84,6 +88,8 @@ export function LawsuitPage() {
       <SummaryCard
         status={summaryStatus}
         body={lawsuit.latestSummary?.body}
+        summaryId={lawsuit.latestSummary?.id}
+        myFeedback={lawsuit.latestSummary?.myFeedback}
         onRetry={() => void summary.retry()}
       />
       <MovementsTable
