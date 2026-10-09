@@ -4,7 +4,20 @@ Lawsuit lookup for Brazilian CNJ numbers. The user enters a CNJ number and sees 
 
 Built for the Resolvvi technical challenge (see [`data/Desafio Técnico com IA - 2026.md`](data/Desafio%20Técnico%20com%20IA%20-%202026.md)).
 
-> **Status:** project foundation in place (spec `01-project-foundation`). Rails API, GraphQL schema stubs, Postgres migrations, Docker Compose, React frontend, CI and this README are done. Real feature behavior (CSV import, lawsuit lookup, AI summary, auth, feedback) is implemented by specs `02` through `07`.
+> **Status:** all eight specs are implemented: CSV import, lawsuit lookup (GraphQL), AI summary, lookup UI, authentication, summary feedback, and the quality gates. Remaining delivery steps (demo video, sharing, email) are manual, see [prepare-delivery](docs/skills/prepare-delivery.md).
+
+
+## Features
+
+| Challenge item | Where |
+|----------------|-------|
+| FR 1 Import the CSV | `bin/rails import:lawsuits` (also on first start) |
+| FR 2 Home with one field and **Consultar** | `/` |
+| FR 3 Lawsuit page like the court page | `/processos/:number` (data, movements, "Carregar mais") |
+| FR 4 and FR 5 LLM summary, at most 3 paragraphs, plain language | Section "Resumo do processo" |
+| Diff 1 to 3 Rails, React, GraphQL | `backend/`, `frontend/`, `POST /graphql` |
+| Diff 4 Authentication | `/login`, `/cadastro`, cookie session |
+| Diff 5 Rate the summary | Buttons "Útil" / "Não foi útil" under the summary |
 
 ## Stack
 
@@ -61,6 +74,23 @@ docker compose run --rm api bin/rails "import:lawsuits[/data/lawsuits_movements.
 
 The task exits with status 1 and a clear message if the file is missing, unreadable, malformed or lacks a required header.
 
+
+### Environment variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `HOST_UID`, `HOST_GID` | Owner of bind-mounted files | `1000` |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials for Compose | `lawsuits`, `change-me`, `lawsuits_development` |
+| `DATABASE_URL` | Rails database connection | Compose `db` service |
+| `RAILS_ENV` | Rails environment | `development` |
+| `SECRET_KEY_BASE` | Rails secret (set your own) | placeholder |
+| `LAWSUITS_CSV_PATH` | CSV read by the import | `/data/lawsuits_movements.csv` |
+| `LLM_PROVIDER` | `auto`, `gemini` or `fake` | `auto` |
+| `LLM_MODEL`, `LLM_FALLBACK_MODEL`, `LLM_TIMEOUT_SECONDS` | Gemini models and timeout | see `.env.example` |
+| `GEMINI_API_KEY` | Gemini key; empty means the fake provider | empty |
+
+`.env` is git-ignored; only `.env.example` is committed.
+
 ### First account
 There is no seeded user. Open `http://localhost:5173/`, you are sent to the login page; choose **Criar conta** and register with any e-mail and a password of 10 to 72 characters. The session lasts 14 days; **Sair** ends it. Sign-in and sign-up are throttled (5 attempts per minute, 10 sign-ups per hour per IP).
 To try the lookup, search `1001399-31.2023.8.26.0070` (found). `1002271-82.2025.8.26.0003` is a valid CNJ number that is not in the data and shows the not-found state.
@@ -73,6 +103,17 @@ To review real summaries for the golden set (needs `GEMINI_API_KEY`, not part of
 ```bash
 docker compose run --rm api bin/rails summaries:eval
 ```
+
+### Reading the summary feedback
+
+Signed-in users vote with **Útil** / **Não foi útil** under each summary (one vote per user and summary; voting again changes it). The team reads the results per prompt version and model:
+
+```bash
+docker compose run --rm api bin/rails feedback:report
+```
+
+It prints summaries, votes, helpful, not helpful and the helpful rate per `prompt_version` and `model` (or "No feedback votes yet."), and never prints user data.
+
 ### 4. Run the tests
 
 ```bash
@@ -105,6 +146,23 @@ docker compose run --rm web npm run codegen
 
 All of the above are run the same way in CI (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
+
+### Coverage
+
+Both suites fail the run below their gate. Last measured numbers:
+
+| Side | Tool | Result | Gate |
+|------|------|--------|------|
+| Backend | RSpec + SimpleCov | 596 examples, 0 failures; **98.31%** lines (1277/1299), 94.82% branches | 80% lines |
+| Frontend | Vitest + v8 | 151 tests, 0 failures; **100%** lines, 98.87% statements, 100% functions, 95.65% branches | 80% lines, statements, functions and branches |
+| End to end | Playwright + axe | 3 tests passed against the running stack with `LLM_PROVIDER=fake` | none |
+
+Reproduce with the commands in the previous section (`rspec`, `npm test -- --run --coverage`, `npm run test:e2e`).
+
+Excluded from coverage: SimpleCov skips `config/`, `db/`, `bin/`, `spec/` and `lib/tasks/summaries.rake` (needs a real Gemini key); Vitest skips `src/graphql/generated/`, `src/test/`, `*.d.ts`, `playwright/` and `vite.config.ts`. The end-to-end test is not part of CI: it needs the full Compose stack and a browser, so it is a documented manual step.
+
+Evidence for each requirement: [traceability](.kiro/specs/08-quality-and-delivery/traceability.md). Audits: [security](.kiro/specs/08-quality-and-delivery/security-audit.md) and [accessibility](.kiro/specs/08-quality-and-delivery/accessibility-audit.md).
+
 ### Stopping
 
 ```bash
@@ -122,3 +180,18 @@ Add `-v` to also drop the Postgres data volume (`docker compose down -v`).
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Decisions (ADRs) | [docs/adr/](docs/adr/) |
 | Specs and tasks | [.kiro/specs/](.kiro/specs/) |
+
+## Assumptions and limits
+
+- Only lawsuits in the CSV can be found. The challenge example `1002271-82.2025.8.26.0003` is a valid CNJ number that is not in the data, so it shows the "not found" state by design.
+- Movements are shown newest first; movements on the same date keep the CSV row order (`source_row`).
+- Authentication is email and password only: no password reset and no email verification.
+- The summary is generated synchronously on first view and cached per lawsuit, movements, prompt version and model. Lawyer names and OAB lines are removed before the text reaches the LLM.
+- The summary explains what happened; it does not predict outcomes or give legal advice, and the page shows a disclaimer.
+- Plain-language quality is a human judgment. The `summaries:eval` task prints summaries for the golden set; a review by a legal expert of a real Gemini run was not part of the automated work and is still open before delivery.
+- Throttling counters live in process memory, which is fine for the single-container demo.
+- The manual accessibility checks (keyboard-only, screen reader, zoom) listed in the [accessibility audit](.kiro/specs/08-quality-and-delivery/accessibility-audit.md) are still open.
+
+## AI-assisted development
+
+The repository is built to be worked on by AI agents: [AGENTS.md](AGENTS.md) is the entry point, [docs/agents](docs/agents/README.md) holds the role personas, [docs/skills](docs/skills/README.md) the workflows, and [.kiro/specs](.kiro/specs/) the requirements, designs and tasks that every change followed (tests first).

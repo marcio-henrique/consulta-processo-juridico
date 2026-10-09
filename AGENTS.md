@@ -38,7 +38,7 @@ Hard constraints from the challenge: automated tests covering **>= 80%**, a rela
 | `.kiro/specs/` | Kiro specs (`requirements.md`, `design.md`, `tasks.md`), one folder per feature |
 | `.kiro/steering/` | Kiro steering (thin wrappers pointing to `docs/`) |
 
-> `backend/` and `frontend/` exist as of spec `01-project-foundation` (Rails API scaffold with GraphQL contract stubs and migrations; Vite React TS scaffold with Apollo Client). Real feature behavior lands in specs `02`-`07`.
+> `backend/` (Rails API, GraphQL, services, LLM adapters) and `frontend/` (React SPA, Playwright E2E in `frontend/playwright/`) are implemented through specs `01`-`08`. Evidence per requirement: [traceability](.kiro/specs/08-quality-and-delivery/traceability.md).
 
 ## Documentation map
 
@@ -133,7 +133,7 @@ Tool-agnostic playbooks in [`docs/skills/`](docs/skills/README.md). Read the mat
 
 ## Common commands
 
-> Verified against the actual repo as of spec 01 (project-foundation). See the [README](README.md#getting-started) for the full list, including lint/security/codegen commands.
+> Verified against the actual repo as of spec 08 (quality-and-delivery). See the [README](README.md#getting-started) for the full list, including lint/security/codegen commands.
 
 ```bash
 cp .env.example .env                                        # set HOST_UID/HOST_GID, SECRET_KEY_BASE, GEMINI_API_KEY
@@ -143,6 +143,8 @@ docker compose run --rm -e RAILS_ENV=test api bundle exec rspec   # backend test
 docker compose run --rm web npm test -- --run                # frontend tests
 docker compose run --rm api bundle exec rubocop               # backend lint
 docker compose run --rm web npm run lint                      # frontend lint
+(cd frontend && PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome npm run test:e2e)   # E2E + axe against the running stack (LLM_PROVIDER=fake)
 docker compose run --rm api bin/contract_check                 # GraphQL schema vs. docs/contracts/schema.graphql
+docker compose run --rm api bin/rails feedback:report            # helpful rate per prompt_version and model
 docker compose run --rm api bin/rails summaries:eval           # print golden-set summaries (needs GEMINI_API_KEY; ALLOW_FAKE=1 for offline)
 ```
