@@ -11,6 +11,24 @@ RSpec.describe "POST /graphql", type: :request do
     expect(body.dig("data", "__typename")).to eq("Query")
   end
 
+  it "serves the lawsuit query over HTTP, with expected failures as data" do
+    create(:lawsuit, number: "1001399-31.2023.8.26.0070")
+    query = 'query($n: String!) { lawsuit(number: $n) { lawsuit { number } errors { code } } }'
+
+    post "/graphql",
+      params: { query: query, variables: { n: "10013993120238260070" } }.to_json,
+      headers: { "CONTENT_TYPE" => "application/json" }
+    expect(JSON.parse(response.body).dig("data", "lawsuit", "lawsuit", "number")).to eq("1001399-31.2023.8.26.0070")
+
+    post "/graphql",
+      params: { query: query, variables: { n: "1002271-82.2025.8.26.0003" } }.to_json,
+      headers: { "CONTENT_TYPE" => "application/json" }
+    body = JSON.parse(response.body)
+    expect(response).to have_http_status(:ok)
+    expect(body["errors"]).to be_nil
+    expect(body.dig("data", "lawsuit", "errors", 0, "code")).to eq("NOT_FOUND")
+  end
+
   it "returns 405 for a GET request" do
     get "/graphql"
 

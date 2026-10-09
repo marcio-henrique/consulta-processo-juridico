@@ -146,7 +146,9 @@ type Summary {
 type UserError { code: ErrorCode!, message: String!, field: String }
 ```
 
-Conventions: mutations return `{ ..., errors: [UserError!]! }`; expected failures are data, not GraphQL top-level errors. Authentication is required for every operation except `signUp`, `signIn`, `me`. Query depth/complexity limits are on.
+Conventions: mutations return `{ ..., errors: [UserError!]! }`; expected failures are data, not GraphQL top-level errors. Authentication is required for every operation except `signUp`, `signIn`, `me`. Query depth/complexity limits are on (max depth 10, max complexity 200).
+
+Lookup details (spec 03): `lawsuit(number:)` accepts formatted or digits-only input and always answers HTTP 200 with `{ lawsuit, errors }`. `movements(first:, after:)` is ordered `occurred_on DESC, source_row ASC`, `first` defaults to 25 (max 100), and cursors are opaque offsets. An invalid `first` or `after` anywhere in the selection returns `INVALID_ARGUMENT` (field `first` or `after`) in the payload with `lawsuit: null`. Unexpected exceptions become a generic top-level error ("Erro interno. Tente novamente.") and are logged with the request id. The full lookup (lawsuit, movements page, count) runs 3 SQL queries, enforced by a spec.
 
 ## 5. Key flows
 
