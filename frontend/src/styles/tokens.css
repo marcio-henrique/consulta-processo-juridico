@@ -1,0 +1,38 @@
+/*
+ * Design tokens. Contrast ratios (WCAG 2.2 AA) are checked in
+ * docs/features/lawsuit-lookup-ui.md (U-10):
+ *   text on surface, muted on surface, brand on surface, border and focus
+ *   ring against the page background.
+ */
+:root {
+  --color-surface: #ffffff;
+  --color-page: #f4f6f8;
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-brand: #1d3557;
+  --color-brand-text: #ffffff;
+  --color-accent: #ffc073;
+  --color-link: #0b4fb3;
+  --color-border: #7b8794;
+  --color-border-soft: #cbd2d9;
+  --color-stripe: #f0f3f6;
+  --color-error: #b3261e;
+  --color-error-bg: #fdecea;
+  --color-success: #1b6e3c;
+  --color-focus: #0b57d0;
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-base: 1rem;
+  --font-size-small: 0.875rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --radius: 4px;
+  --target-size: 2.75rem; /* 44px, above the 24px minimum of WCAG 2.5.8 */
+  --content-max: 64rem;
+}
