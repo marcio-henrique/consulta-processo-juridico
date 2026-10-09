@@ -84,7 +84,7 @@ Chosen from the real data by the planning analysis; the Legal Expert confirms or
 | `1003790-87.2022.8.26.0071` | Longest (120 movements) |
 | `1010953-94.2023.8.26.0100` | Most text (budget stress) |
 | `1009608-88.2022.8.26.0016` | Settled by agreement (13 movements), archived |
-| `1005003-07.2023.8.26.0100` | Claim upheld |
+| `1004772-13.2022.8.26.0068` | Claim upheld (ruling for the plaintiff; `1005003-07.2023.8.26.0100` was swapped out because its "Julgada Procedente" text only approves an agreement) |
 | `1000061-57.2025.8.26.0068` | Claim partly upheld |
 | `1030962-43.2024.8.26.0003` | Claim dismissed, with appeal |
 | `1024104-25.2021.8.26.0577` | Partly upheld, enforcement phase |

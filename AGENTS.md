@@ -144,4 +144,5 @@ docker compose run --rm web npm test -- --run                # frontend tests
 docker compose run --rm api bundle exec rubocop               # backend lint
 docker compose run --rm web npm run lint                      # frontend lint
 docker compose run --rm api bin/contract_check                 # GraphQL schema vs. docs/contracts/schema.graphql
+docker compose run --rm api bin/rails summaries:eval           # print golden-set summaries (needs GEMINI_API_KEY; ALLOW_FAKE=1 for offline)
 ```

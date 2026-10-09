@@ -61,6 +61,15 @@ docker compose run --rm api bin/rails "import:lawsuits[/data/lawsuits_movements.
 
 The task exits with status 1 and a clear message if the file is missing, unreadable, malformed or lacks a required header.
 
+### AI summary (LLM)
+The summary is generated on demand by `generateSummary` and cached per lawsuit, movements, prompt version and model (see [ai-summary](docs/domains/ai-summary.md)). Configure it in `.env`:
+- `LLM_PROVIDER`: `auto` (default; Gemini when `GEMINI_API_KEY` is set, otherwise the offline `fake` provider), `gemini` or `fake`. The test environment always uses `fake`, so tests never reach the network.
+- `LLM_MODEL` / `LLM_FALLBACK_MODEL` / `LLM_TIMEOUT_SECONDS`: model ids (defaults in `.env.example`) and the per-attempt timeout.
+- The `fake` provider returns a deterministic pt-BR text built from the lawsuit data, so the whole flow is demoable without a key.
+To review real summaries for the golden set (needs `GEMINI_API_KEY`, not part of CI; add `-e LAWSUITS=n1,n2` to pick lawsuits):
+```bash
+docker compose run --rm api bin/rails summaries:eval
+```
 ### 4. Run the tests
 
 ```bash

@@ -52,6 +52,7 @@ Generate a plain-language summary of a lawsuit from its movements using an LLM, 
 2. THE validator SHALL strip markdown artifacts (headings, list markers, emphasis, backticks).
 3. IF the output has more than 3 paragraphs or more than 2,000 characters, THEN the service SHALL retry once with a stricter instruction; IF it still exceeds, THEN extra paragraphs SHALL be merged into the third and the text truncated at a sentence boundary under 2,000 characters.
 4. WHEN the output contains blocklisted jargon, THEN the system SHALL log a warning metric and SHALL NOT block the summary.
+5. IF the output contains an amount written as `R$ <number>` whose value is not present in the prompt (garbled separators or invented value), THEN the service SHALL retry once with the stricter instruction; IF it is still wrong, THEN generation SHALL fail with `SUMMARY_UNAVAILABLE` and nothing SHALL be persisted.
 
 ### Requirement 5: Persistence and cache
 
