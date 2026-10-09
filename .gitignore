@@ -19,6 +19,8 @@ backend/storage/*
 backend/coverage/
 backend/.bundle/
 backend/vendor/bundle/
+backend/.cache/
+backend/.local/
 !backend/log/.keep
 !backend/tmp/.keep
 !backend/storage/.keep

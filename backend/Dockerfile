@@ -16,7 +16,8 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 ENV BUNDLE_PATH="/usr/local/bundle" \
-    RAILS_ENV="development"
+    RAILS_ENV="development" \
+    HOME="/rails"
 
 COPY Gemfile Gemfile.lock ./
 RUN bundle install

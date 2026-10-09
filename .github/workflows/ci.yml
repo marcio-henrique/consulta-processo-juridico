@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  LLM_PROVIDER: fake
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lawsuits
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: lawsuits_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lawsuits"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://lawsuits:change-me@localhost:5432/lawsuits_test
+      SECRET_KEY_BASE: ci-only-secret-key-base-not-used-for-anything-real
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.12'
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Secret scan
+        working-directory: .
+        run: |
+          if git grep -nE "AIza[0-9A-Za-z_-]{35}|AQ\.[A-Za-z0-9_-]{20,}" -- . ':!*.md' ':!.env.example'; then
+            echo "Possible secret found in tracked files, see matches above." >&2
+            exit 1
+          fi
+
+      - name: RuboCop
+        run: bundle exec rubocop
+
+      - name: Brakeman
+        run: bundle exec brakeman -q --no-pager
+
+      - name: bundler-audit
+        run: |
+          bundle exec bundler-audit update
+          bundle exec bundler-audit check
+
+      - name: Prepare database
+        run: bin/rails db:prepare
+
+      - name: Schema contract check
+        run: bin/contract_check
+
+      - name: RSpec (with coverage gate)
+        run: bundle exec rspec
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Codegen (fails if backend/schema.graphql is missing or invalid)
+        run: npm run codegen
+
+      - name: Test (with coverage gate)
+        run: npm test -- --run --coverage
+
+      - name: Build
+        run: npm run build
