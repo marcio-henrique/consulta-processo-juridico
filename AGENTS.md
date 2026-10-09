@@ -138,7 +138,7 @@ Tool-agnostic playbooks in [`docs/skills/`](docs/skills/README.md). Read the mat
 ```bash
 cp .env.example .env                                        # set HOST_UID/HOST_GID, SECRET_KEY_BASE, GEMINI_API_KEY
 docker compose up --build                                   # db + api (3000) + web (5173)
-docker compose run --rm api bin/rails import:lawsuits        # CSV import; added by spec 02, not yet implemented
+docker compose run --rm api bin/rails import:lawsuits        # CSV import (also runs on first container start)
 docker compose run --rm -e RAILS_ENV=test api bundle exec rspec   # backend tests + coverage gate (RAILS_ENV=test is required)
 docker compose run --rm web npm test -- --run                # frontend tests
 docker compose run --rm api bundle exec rubocop               # backend lint
