@@ -8,7 +8,7 @@ class GraphqlController < ApplicationController
     variables = prepare_variables(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
-    context = { current_user: nil }
+    context = { current_user: nil, request_id: request.request_id }
 
     result = BackendSchema.execute(
       query,
