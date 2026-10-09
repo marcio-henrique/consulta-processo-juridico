@@ -75,7 +75,9 @@ There is no seeded account: create the first one at `/cadastro` (or with `signUp
 | Aggregation | `bin/rails feedback:report` prints helpful rate per `prompt_version` and `model`, to guide prompt tuning |
 | Scope | Rating attaches to a specific summary row, so a new prompt version starts with a clean slate |
 
-UI: two buttons "Útil" / "Não foi útil" with `aria-pressed`, a short thank-you message, and no modal.
+Implementation: `Feedback::Rate` upserts on the unique index (concurrent clicks cannot raise or duplicate) and answers `NOT_FOUND` for an unknown summary; anonymous callers are stopped by the schema guard with `UNAUTHENTICATED`. `Summary.myFeedback` is batched by `Sources::MyFeedback`, keyed by the current user, so no query can return another user's vote. The foreign keys have no `on_delete: cascade`; `Summary` and `User` use `dependent: :destroy` for their votes instead.
+Report: `docker compose run --rm api bin/rails feedback:report` prints one row per `prompt_version` and `model` (summaries, votes, helpful, not_helpful, helpful_rate) and "No feedback votes yet." when empty. It never prints user ids or emails.
+UI: two buttons "Útil" / "Não foi útil" with `aria-pressed` (the pressed one is filled and gets a check mark), an optimistic update that Apollo rolls back on failure, and a polite live region with "Obrigado pelo feedback." or "Não foi possível registrar seu voto.". Clicking the active button keeps the vote and sends nothing. No modal. The buttons render only for a ready summary.
 
 ## 8. Privacy
 
