@@ -8,5 +8,12 @@ module Types
     field :generated_at, GraphQL::Types::ISO8601DateTime, null: false
     field :my_feedback, Boolean, null: true,
       description: "Current user's vote: true, false or null (not voted). Never exposes other users."
+
+    def my_feedback
+      user = context[:current_user]
+      return nil if user.nil?
+
+      dataloader.with(Sources::MyFeedback, user.id).load(object.id)
+    end
   end
 end
