@@ -16,6 +16,11 @@ module Errors
 
     module_function
 
+    # Default pt-BR message for an ErrorCode (symbol or string), or nil.
+    def for(code)
+      const_get(code.to_s, false) if code.to_s.match?(/\A[A-Z_]+\z/) && const_defined?(code.to_s, false)
+    end
+
     # Builds a UserError-shaped hash: { code:, message:, field: }.
     def build(code, message, field: nil)
       { code: code, message: message, field: field }
