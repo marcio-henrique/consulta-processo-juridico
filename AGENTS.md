@@ -24,7 +24,7 @@ Hard constraints from the challenge: automated tests covering **>= 80%**, a rela
 | Database | PostgreSQL |
 | Frontend | React + TypeScript + Vite + Apollo Client, WCAG 2.2 AA |
 | LLM | Gemini (REST, key in `GEMINI_API_KEY`) behind `Llm::Client`; `fake` provider for dev/test ([ADR-0002](docs/adr/0002-llm-provider-abstraction.md)) |
-| Tests | RSpec + SimpleCov (backend), Vitest + Testing Library (frontend), Playwright smoke (E2E) |
+| Tests | RSpec + SimpleCov (backend), Vitest + Testing Library (frontend), Playwright E2E + axe (frontend/playwright) |
 | Runtime | Docker Compose (host Ruby is 3.0, so never rely on host Ruby) |
 
 ## Repository structure

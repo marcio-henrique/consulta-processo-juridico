@@ -192,7 +192,7 @@ sequenceDiagram
 | `src/components/` | `CnjSearchForm`, `LawsuitHeader`, `MovementsTable`, `SummaryCard`, `FeedbackButtons`, `AppShell` |
 | `src/graphql/` | Operations (`.graphql`) and generated types |
 | `src/lib/` | `cnj.ts` (mask + validation mirror), `format.ts` |
-| `src/auth/` | Auth context, protected route |
+| `src/auth/` | `AuthProvider` (state from `me`), `RequireAuth`, `safeNext`, `unauthenticatedLink` (Apollo link reporting `UNAUTHENTICATED`) |
 | `src/test/` | Test utils, MSW handlers |
 
 State: Apollo cache for server state; React state for forms. No global store.
@@ -202,7 +202,7 @@ The UI mirrors e-SAJ section order: header data, parties/authors info, movements
 
 | Concern | Decision |
 |---------|----------|
-| Security | `has_secure_password`, cookie `HttpOnly; SameSite=Lax; Secure` (prod), rack-attack throttling on sign-in and `generateSummary`, GraphQL depth/complexity limits, CORS closed. See [AI-GUARDRAILS](AI-GUARDRAILS.md). |
+| Security | `has_secure_password`, cookie `HttpOnly; SameSite=Lax; Secure` (prod), rack-attack counters for sign-in, sign-up and `generateSummary` plus a per-IP flood limit, security headers on every response, GraphQL depth/complexity/alias limits, CORS closed. See [AI-GUARDRAILS](AI-GUARDRAILS.md). |
 | Privacy | Lawyer names/OAB stripped before LLM; prompts not logged. |
 | Observability | Rails logger with request id; log provider, model, latency, token counts for each LLM call (no content). |
 | Config | ENV only: `DATABASE_URL`, `SECRET_KEY_BASE`, `LAWSUITS_CSV_PATH`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_FALLBACK_MODEL`, `LLM_TIMEOUT_SECONDS`, `GEMINI_API_KEY`. `.env.example` committed, `.env` git-ignored. |

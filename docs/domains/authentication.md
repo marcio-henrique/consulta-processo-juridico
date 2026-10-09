@@ -35,9 +35,10 @@ Same-origin deployment (Vite dev proxy in development) means no CORS and no thir
 - GraphQL endpoint accepts only `POST` with `Content-Type: application/json`.
 - `Origin` (when present) must match the request host; otherwise 403.
 - `SameSite=Lax` blocks cross-site POST cookies.
-- Throttling (`rack-attack`): sign-in 5 attempts/min per IP and per email; sign-up 10/hour per IP; `generateSummary` 10/min per user.
-- Query depth limit 10, complexity limit set in the schema.
-
+- Throttling uses `rack-attack`'s cache and counters. The per-operation limits (sign-in 5/min per IP and per email, sign-up 10/hour per IP, `generateSummary` 10/min per user) are enforced where the operation runs (`Auth::Throttle`), so aliasing or batching mutations in one request cannot dodge them; the answer is a `RATE_LIMITED` user error. A coarse Rack-level throttle (300 requests per 5 minutes per IP on `/graphql`) answers HTTP 429 with a JSON body. The counters live in process memory, which is fine for the single-container demo.
+- Every response carries `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy: same-origin` and `X-Frame-Options: DENY` (plus HSTS in production). GraphQL: max depth 10, max complexity 200, at most 20 aliases of one field, introspection off in production.
+- Logs filter `password`, `variables`, `query`, cookies, tokens and API keys.
+- 
 ## 5. Authorization matrix
 
 | Operation | Anonymous | Signed in |
@@ -51,6 +52,7 @@ Same-origin deployment (Vite dev proxy in development) means no CORS and no thir
 
 Unauthenticated access to protected operations returns the `UNAUTHENTICATED` user error (HTTP 200, GraphQL convention), and the SPA redirects to `/login`.
 
+Signing in or up while already signed in replaces the current session, so rows do not pile up.
 ## 6. Frontend behavior
 
 | Route | Rule |
@@ -59,7 +61,8 @@ Unauthenticated access to protected operations returns the `UNAUTHENTICATED` use
 | `/`, `/processos/:number` | Protected. Anonymous users go to `/login?next=<path>`; after sign in, return to `next`. |
 | App shell | Shows the user email and a "Sair" button when signed in. |
 
-The auth state comes from the `me` query on app start; the SPA never reads the cookie.
+The auth state comes from the `me` query on app start; the SPA never reads the cookie and never writes credentials or tokens to web storage. The `?next=` target is accepted only when it is a same-origin relative path (`safeNext`). When any operation answers `UNAUTHENTICATED` (except `signIn`, where it means wrong credentials), the SPA drops its auth state and redirects to `/login?next=<current path>`. An explicit sign out clears the Apollo cache and goes to a plain `/login`.
+There is no seeded account: create the first one at `/cadastro` (or with `signUp`).
 
 ## 7. Summary feedback
 
